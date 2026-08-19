@@ -30,10 +30,69 @@
     max-width: 1200px;
     margin: 0 auto;
   }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
   header h1 {
     font-size: 26px;
     margin: 0 0 6px;
     letter-spacing: 0.2px;
+  }
+  .user-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    flex: 0 0 auto;
+  }
+  .user-bar-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .user-bar select,
+  .user-bar input[type="text"] {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .user-bar input[type="text"] { width: 130px; }
+  .user-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .user-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .user-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .user-btn.accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .user-btn.accent:hover:not(:disabled) { color: #fff; opacity: 0.9; }
+  .user-btn.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .user-count {
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
   }
   header p {
     margin: 0;
@@ -158,6 +217,7 @@
   }
 
   .card {
+    position: relative;
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -170,6 +230,29 @@
   .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(31,35,40,0.09), 0 10px 22px rgba(31,35,40,0.08);
+  }
+  .card-list-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.92);
+    color: var(--ink-soft);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+    z-index: 2;
+  }
+  .card-list-btn.active {
+    background: var(--accent);
+    color: #fff;
   }
   .card-img {
     width: 100%;
@@ -268,17 +351,38 @@
   @media (max-width: 600px) {
     header, .controls, main, footer { padding-left: 16px; padding-right: 16px; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .header-top { flex-direction: column; align-items: stretch; }
+    .user-bar { align-items: stretch; width: 100%; }
+    .user-bar-row { justify-content: flex-start; }
+    .user-bar select { flex: 1 1 auto; min-width: 0; }
+    .user-bar input[type="text"] { flex: 1 1 auto; width: auto; min-width: 0; }
+    .user-count { flex: 1 1 100%; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Essen 2026 Pre-order 收集清單</h1>
+  <div class="header-top">
+    <h1>Essen 2026 Pre-order 收集清單</h1>
+    <div class="user-bar" id="userBar">
+      <div class="user-bar-row">
+        <select id="userSelect"><option value="">— 選擇使用者 —</option></select>
+        <input type="text" id="newUserInput" placeholder="輸入名字建立清單" maxlength="20">
+        <button id="newUserBtn" class="user-btn">新增使用者</button>
+      </div>
+      <div class="user-bar-row">
+        <span class="user-count" id="userCount">尚未選擇使用者</span>
+        <button id="toggleMyListBtn" class="user-btn" disabled>只看我的清單</button>
+        <button id="exportExcelBtn" class="user-btn accent" disabled>匯出 Excel</button>
+      </div>
+    </div>
+  </div>
   <p>
     整理自 BoardGameGeek geeklist「<a href="https://boardgamegeek.com/geeklist/380039/essen-2026-preorder-pickups" target="_blank" rel="noopener">Essen 2026 Preorder Pickups</a>」，
     收錄 SPIEL Essen 2026（2026/10/22–25）現場取貨的非群眾募資 pre-order 資訊。<br>
-    資料整理時間：2026/08/18。攤位、遊戲清單以出版商自行公告為準，正式資訊請於出發前至原始清單或出版商網站再次確認。
+    資料整理時間：2026/08/18。攤位、遊戲清單以出版商自行公告為準，正式資訊請於出發前至原始清單或出版商網站再次確認。<br>
+    右上角可建立自己的名字，點選遊戲卡片上的星號即可加入個人清單（僅存於本機瀏覽器），並可匯出成 Excel。
   </p>
   <div class="stats-row" id="statsRow"></div>
 </header>
@@ -307,6 +411,7 @@
   部分遊戲（尚未於 BGG 建立資料頁者）僅列出名稱，未附照片與年份，避免臆測錯誤資訊。
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const DATA = [{"publisher":"Batusaki","booth":"2D631","games":[{"name":"Gamma Extra","year":2026,"image":"https://cf.geekdo-images.com/G8OWDlwWnqGijWB4onf-1w__original/img/TH7AX10lPRtg-g6GEZxDfPw46ak=/0x0/filters:format(jpeg)/pic9601870.jpg","categories":["Card Game","Number","Real-time"],"thing":465626,"bgg_url":"https://boardgamegeek.com/boardgame/465626","designers":["Eloi Pujadas"]},{"name":"Cena","year":2025,"image":"https://cf.geekdo-images.com/QO76zRGHtL7bmruRXPzhSg__original/img/FLfPDiECHpDKYJCtY4ZEZ_6AekE=/0x0/filters:format(jpeg)/pic9590697.jpg","categories":["Card Game"],"thing":445641,"bgg_url":"https://boardgamegeek.com/boardgame/445641","designers":["A.I. Lab"]},{"name":"Magic Wands","year":2026,"image":"https://cf.geekdo-images.com/bpZZ0xE13SOkAzNsq7Uwpg__original/img/2yac8nrgEldWIKkT0E_2Pt4S_Ro=/0x0/filters:format(jpeg)/pic9601949.jpg","categories":["Card Game","Fantasy"],"thing":468586,"bgg_url":"https://boardgamegeek.com/boardgame/468586","designers":["Ryusei Nakata"]}]},{"publisher":"Kokorín Games","booth":null,"games":[{"name":"Sitting Bull","year":2026,"image":"https://cf.geekdo-images.com/L0EoHNi0fqM50vVp8_yaOw__original/img/NVfwSrP8VHkscNl8Gmdu_LQXRmQ=/0x0/filters:format(jpeg)/pic9531957.jpg","categories":["American Indian Wars","American West"],"thing":468974,"bgg_url":"https://boardgamegeek.com/boardgame/468974","designers":["Perepau Llistosella"]},{"name":"Photosaphari","year":2026,"image":"https://cf.geekdo-images.com/1AQv8J3Vdh2lJczarEqjQw__original/img/_xr-f5KRhUW21xYDV5S5e02TDm0=/0x0/filters:format(jpeg)/pic9527704.jpg","categories":["Animals","Children's Game","Party Game"],"thing":468154,"bgg_url":"https://boardgamegeek.com/boardgame/468154","designers":["Perepau Llistosella"]},{"name":"Tramposo","year":2026,"image":"https://cf.geekdo-images.com/9QMWIky9PrvNT3LEaIsLBw__original/img/5_s_mSMwSZPsaW-M9CWBltJH2n0=/0x0/filters:format(jpeg)/pic9527693.jpg","categories":["Animals","Children's Game","Party Game"],"thing":468155,"bgg_url":"https://boardgamegeek.com/boardgame/468155","designers":["Eugeni Castaño","Guillem Coll"]}]},{"publisher":"Czech Games Edition (CGE)","booth":null,"games":[{"name":"Kingdom Come: Deliverance – The Board Game","year":2026,"image":"https://cf.geekdo-images.com/HILsgVvw-j5bb6bXdrlp1g__opengraph/img/Yv02F1AuqaJeUqv12BrkxsHBruw=/0x0:2000x1050/fit-in/1200x630/filters:strip_icc()/pic9666028.png","categories":["Adventure","Fighting","Medieval","Video Game Theme"],"thing":473897,"bgg_url":"https://boardgamegeek.com/boardgame/473897","designers":["Vlaada Chvátil","Tomáš Holek"]}]},{"publisher":"Fentasy Games","booth":"4-B123","games":[{"name":"Yinzi: Ming","year":2025,"image":"https://cf.geekdo-images.com/JVCYZKUhzKDsXXowIQg66A__opengraph/img/vveMx2DqMnPbOjmuWNPD4IjzQ3E=/0x0:3724x1955/fit-in/1200x630/filters:strip_icc()/pic8495792.jpg","categories":["Economic","Industry / Manufacturing","Medieval"],"thing":369938,"bgg_url":"https://boardgamegeek.com/boardgame/369938","designers":["Costa","Rôla"]},{"name":"Microlonies","year":2027,"image":"https://cf.geekdo-images.com/nlUc-2dAT56Xx0rge7Fn-Q__original/img/ePiD5wZGLtFYMUhxGapdRhKwbc4=/0x0/filters:format(png)/pic9615250.png","categories":["Animals","Environmental"],"thing":462851,"bgg_url":"https://boardgamegeek.com/boardgame/462851","designers":["Sébastien Castano","Franz Couderc"]},{"name":"Kikai","year":2023,"image":"https://cf.geekdo-images.com/KLIaLuOf8NuAkrlghaXQgg__original/img/rXjNXzoE1isnDG238XIuULSBwcc=/0x0/filters:format(jpeg)/pic8906255.jpg","categories":[],"thing":406231,"bgg_url":"https://boardgamegeek.com/boardgame/406231","designers":["Yasuyuki Yamagishi"]}]},{"publisher":"dlp games","booth":null,"games":[{"name":"Loyalty: Rome","year":2026,"image":"https://cf.geekdo-images.com/dZBIh8Xq39hdysE54sOL9A__original/img/0Upvg9WMcEG3wYe4uE99dhclzLw=/0x0/filters:format(jpeg)/pic9663258.jpg","categories":["Mythology","Religious"],"thing":473561,"bgg_url":"https://boardgamegeek.com/boardgame/473561","designers":["Nicholas Paschalis"]},{"name":"Underwood","year":2026,"image":"https://cf.geekdo-images.com/N8k3VAUpubJ0eb-TkezhkQ__original/img/KZRXGxJ-x-TzIz1IH_b-FrBCwcU=/0x0/filters:format(jpeg)/pic9663263.jpg","categories":["Abstract Strategy"],"thing":473560,"bgg_url":"https://boardgamegeek.com/boardgame/473560","designers":["Remo Conzadori","Andrea Mainini"]},{"name":"-60°","year":2026,"image":"https://cf.geekdo-images.com/vE_yzl-Hc3kJY7OnzX86QQ__original/img/L3FmtCu6NJgjf2tONJAkD3u9-Uc=/0x0/filters:format(png)/pic9678597.png","categories":["Exploration"],"thing":474125,"bgg_url":"https://boardgamegeek.com/boardgame/474125","designers":["Alexander Pfister","Peter Prinz"]}]},{"publisher":"PhantomLab","booth":null,"games":[{"name":"Spot Me Gaffer!","year":2026,"image":"https://cf.geekdo-images.com/4u7BQiPZdJ8cZpI2h9synQ__original/img/ROA75YGESzFYs_UfliEWVdneaGM=/0x0/filters:format(jpeg)/pic9533145.jpg","categories":["Puzzle","Real-time"],"thing":467808,"bgg_url":"https://boardgamegeek.com/boardgame/467808","designers":["コトリ (Kotori)"]},{"name":"Monster Decoy","year":2019,"image":"https://cf.geekdo-images.com/6kC_Ls12_Zmqakab_ADk7Q__original/img/sbYXE91hVrCvJCvD6-9hBVr162w=/0x0/filters:format(jpeg)/pic9475651.jpg","categories":["Abstract Strategy","Children's Game","Fantasy"],"thing":281311,"bgg_url":"https://boardgamegeek.com/boardgame/281311","designers":["コトリ (Kotori)"]},{"name":"Astraios: Starlight","year":2025,"image":"https://cf.geekdo-images.com/A8sJBAp1qX-Ojj_Wy4wkPg__original/img/gK3Un3ivqsGzg98ee5oNKhwtU14=/0x0/filters:format(jpeg)/pic8943882.jpg","categories":["Abstract Strategy","Territory Building"],"thing":448433,"bgg_url":"https://boardgamegeek.com/boardgame/448433","designers":["コトリ (Kotori)"]},{"name":"Lumina Spell","year":2025,"image":"https://cf.geekdo-images.com/FtIH5A5oDgXscl0H6HFrKA__original/img/qOZ7in2OaDEZa6mXOvWxMfr-r48=/0x0/filters:format(jpeg)/pic8881102.jpg","categories":["Fantasy"],"thing":445931,"bgg_url":"https://boardgamegeek.com/boardgame/445931","designers":["コトリ (Kotori)"]},{"name":"Acornism","year":2023,"image":"https://cf.geekdo-images.com/yW8FmFTBDWKfkWmsCY4o5w__original/img/hrlOOrEz9sG3E8JdVsfjhvsSM1o=/0x0/filters:format(jpeg)/pic8064975.jpg","categories":["Abstract Strategy","Animals","Children's Game","Puzzle"],"thing":415750,"bgg_url":"https://boardgamegeek.com/boardgame/415750","designers":["コトリ (Kotori)"]},{"name":"OrthoGnomes","year":2025,"image":"https://cf.geekdo-images.com/BX7BfSl_c1Pn4refhP9lOg__original/img/ssfAjYi21XrwmV73Bxq4TpEh6m4=/0x0/filters:format(jpeg)/pic8493040.jpg","categories":["Abstract Strategy","Fantasy","Mythology","Puzzle","Territory Building"],"thing":431103,"bgg_url":"https://boardgamegeek.com/boardgame/431103","designers":["コトリ (Kotori)"]},{"name":"Heureka","year":2025,"image":"https://cf.geekdo-images.com/Rg76wIyIQKiB-coTWz1QVA__original/img/QQKQarqKzw3VT92dmVzdKk2Z43Y=/0x0/filters:format(jpeg)/pic8881983.jpg","categories":["Puzzle"],"thing":446496,"bgg_url":"https://boardgamegeek.com/boardgame/446496","designers":["コトリ (Kotori)"]},{"name":"PalinGnomes","year":2024,"image":"https://cf.geekdo-images.com/zrRvITX7cjX-6NwF7CpOxw__original/img/YakG2LaD_9z0cla-5wUxvHg7YYA=/0x0/filters:format(png)/pic8310918.png","categories":["Abstract Strategy","Fantasy"],"thing":424889,"bgg_url":"https://boardgamegeek.com/boardgame/424889","designers":["コトリ (Kotori)"]}]},{"publisher":"Mizo Games","booth":null,"games":[{"name":"2045","year":2025,"image":"https://cf.geekdo-images.com/A8WqyVxLjDU06cVlL0s_0A__original/img/yLvoxE1pUIyX6-zFzt7TTOU094I=/0x0/filters:format(png)/pic8888187.png","categories":["Wargame"],"thing":423178,"bgg_url":"https://boardgamegeek.com/boardgame/423178","designers":[]},{"name":"My Life Be Like","year":2024,"image":"https://cf.geekdo-images.com/UwgUVyDR-tnzFNR1YC4Wbg__original/img/cc9UimzCPt8CAlmR9kHIOjhnZAI=/0x0/filters:format(jpeg)/pic8400913.jpg","categories":["Party Game"],"thing":426444,"bgg_url":"https://boardgamegeek.com/boardgame/426444","designers":["Chih-Fan Chen"]}]},{"publisher":"Musoka Studio","booth":"Goldenmeeple stand","games":[{"name":"Trick Stakes","year":2024,"image":"https://cf.geekdo-images.com/BZXyKygnOo3LqOW4PH446A__original/img/BGry_rcWsFc5mwcbNElyBndkZso=/0x0/filters:format(png)/pic9265646.png","categories":["Card Game"],"thing":420932,"bgg_url":"https://boardgamegeek.com/boardgame/420932","designers":["Susumu Kawasaki","場咲工(Basaki Takumi)"]},{"name":"Yami","year":2026,"image":"https://cf.geekdo-images.com/kXQ1Wc0XeFGTKHDz6gRTNA__original/img/XHH-uEdQZsr4r7iPD8IjvQLjbe4=/0x0/filters:format(png)/pic9084601.png","categories":["Adventure","Deduction","Exploration","Fantasy","Video Game Theme"],"thing":452684,"bgg_url":"https://boardgamegeek.com/boardgame/452684","designers":["Hiroki Ohba","Anthony Perone","Ryoji Suzuki","Hiraku Tezuka"]},{"name":"CATsle Builders","year":2023,"image":"https://cf.geekdo-images.com/xqXWQIXMZKKa0tlaCxo7Sg__original/img/jnZSybebOA_NW8WoTnnwcxOVm-Q=/0x0/filters:format(png)/pic7836592.png","categories":["Card Game"],"thing":405460,"bgg_url":"https://boardgamegeek.com/boardgame/405460","designers":["Fukutarou","Yozaemon Matumoto (松本与左衛門)"]},{"name":"Tricky Time Crisis","year":2023,"image":"https://cf.geekdo-images.com/ad7U37lNcWBqD2hv5lIu8Q__itemrep/img/iN5K-ADzGOAVnzjlpJ3ZZw3NeUc=/fit-in/246x300/filters:strip_icc()/pic9309935.png","categories":["Card Game"],"thing":383701,"bgg_url":"https://boardgamegeek.com/boardgame/383701","designers":["Jon Barron"]},{"name":"Tricky Time Crisis: Call of Heroes","year":2026,"image":"https://cf.geekdo-images.com/qR52sQuM0-t7726C9jHkRg__original/img/i_QZAhCbnSfxD1redK7GEA5oZy0=/0x0/filters:format(png)/pic9653075.png","categories":["Expansion for Base-game","Card Game","Comic Book / Strip"],"thing":473436,"bgg_url":"https://boardgamegeek.com/boardgame/473436","designers":["Jon Barron"]},{"name":"Candy, Spiders, Leopards","year":2024,"image":"https://cf.geekdo-images.com/i0NXEbo0i0d8Ek2PXuasLg__original/img/rLm52w5_IkSX56sEdo5QlTvNiQA=/0x0/filters:format(jpeg)/pic8372922.jpg","categories":["Card Game","Children's Game"],"thing":420509,"bgg_url":"https://boardgamegeek.com/boardgame/420509","designers":["HoFゲームズ"]}]},{"publisher":"PHALANX","booth":null,"games":[{"name":"Tora Tora Tora!","year":2026,"image":"https://cf.geekdo-images.com/8yz9pf5aW8INWYi79Q0dGg__original/img/ISivFWysejCCf2aZHhF41kr13s0=/0x0/filters:format(jpeg)/pic9434441.jpg","categories":["Wargame","World War II"],"thing":465750,"bgg_url":"https://boardgamegeek.com/boardgame/465750","designers":["Wataru Horiba (堀場わたる)"]},{"name":"1943: Race to Rabaul","year":2026,"image":"https://cf.geekdo-images.com/ztNYRWmKpXqUUtayWN8I0w__original/img/CepU-r4Wuh-y8l_jvnLxrGUYFy0=/0x0/filters:format(jpeg)/pic9403506.jpg","categories":["Transportation","Wargame","World War II"],"thing":458575,"bgg_url":"https://boardgamegeek.com/boardgame/458575","designers":["Volko Ruhnke"]},{"name":"1941: Race to Moscow","year":2022,"image":"https://cf.geekdo-images.com/4b-6UoD1xfl27l2SD18KRg__original/img/mFCHdLbKCGx1a2Cre_A7dSqQD68=/0x0/filters:format(jpeg)/pic6715708.jpg","categories":["Trains","Transportation","Wargame","World War II"],"thing":190572,"bgg_url":"https://boardgamegeek.com/boardgame/190572","designers":["Valdemar Gumienny"]},{"name":"Total Domination","year":2023,"image":"https://cf.geekdo-images.com/fPGeKMzGEdoqYBg5p8oFIw__original/img/53JFv6hCpv6ztLfb8XKUqQKSlHE=/0x0/filters:format(png)/pic7821001.png","categories":["Card Game","Wargame","World War II"],"thing":309427,"bgg_url":"https://boardgamegeek.com/boardgame/309427","designers":["Wei-Cheng Cheng"]},{"name":"Keep'em Rolling: 1944 – Race to the Rhine","year":2023,"image":"https://cf.geekdo-images.com/_Yel2pLwAmXPRzWfv3Vc2g__original/img/QbVhtRQe2UdG4M19y_WB04XQYLQ=/0x0/filters:format(png)/pic6780314.png","categories":["Transportation","Wargame","World War II"],"thing":359443,"bgg_url":"https://boardgamegeek.com/boardgame/359443","designers":["Jaro Andruszkiewicz","Valentin Crespel","Rémi Dufourneau","Valdemar Gumienny","Yves Roig"]},{"name":"A Bridge Too Far","year":2025,"image":"https://cf.geekdo-images.com/y2RUf-xEesxY7Ohgvg4pAQ__itemrep/img/YfVoXQCpql-yLlAhU9Ae7MlTLcU=/fit-in/246x300/filters:strip_icc()/pic9107925.png","categories":["Book","Dice","Modern Warfare","Wargame","World War II"],"thing":454424,"bgg_url":"https://boardgamegeek.com/boardgame/454424","designers":["José Luis Barca"]},{"name":"Iron, Blood, Snow & Mud","year":2023,"image":"https://cf.geekdo-images.com/YIXg_XYNSnYU_sEB7PfNkg__original/img/8Nvg0rVIRcd-kp_QBu0XprofGMM=/0x0/filters:format(png)/pic6609196.png","categories":["Wargame","World War II"],"thing":341055,"bgg_url":"https://boardgamegeek.com/boardgame/341055","designers":["Guglielmo Duccoli"]}]},{"publisher":"Pink Troubadour","booth":null,"games":[{"name":"Carl von Linné","year":2026,"image":"https://cf.geekdo-images.com/F1uoScNNSs4sSWbrjL3kEQ__original/img/JS1agp7EUXHR7mXf8VbLJgefdj0=/0x0/filters:format(jpeg)/pic9527999.jpg","categories":["Educational","Exploration","Nautical","Travel"],"thing":462012,"bgg_url":"https://boardgamegeek.com/boardgame/462012","designers":["Michal Peichl"]},{"name":"Carpet Racers","year":2026,"image":"https://cf.geekdo-images.com/0PwtWhurgylWu8UTI_UeCw__original/img/jR0_nGDMZR1K0wG3vXSCzMk3Wqo=/0x0/filters:format(jpeg)/pic9684967.jpg","categories":["Bluffing","Deduction","Racing","Video Game Theme"],"thing":474289,"bgg_url":"https://boardgamegeek.com/boardgame/474289","designers":["Tomáš Holek"]},{"name":"Forestry: Growing Further","year":2026,"image":"https://cf.geekdo-images.com/XCal5KXgdIOAtnPSq2usGg__original/img/c5HSrkBySwSbG6e7ONZekZnbxAs=/0x0/filters:format(jpeg)/pic9684968.jpg","categories":["Expansion for Base-game","Educational","Environmental","Farming","Industry / Manufacturing"],"thing":474292,"bgg_url":"https://boardgamegeek.com/boardgame/474292","designers":["Michal Peichl"]},{"name":"Loony Clues","year":2026,"image":"https://cf.geekdo-images.com/_TwvPHXtfymctSzCYXWvYQ__original/img/Fs1vKAnWZYjKmRv9qRxcnB542NY=/0x0/filters:format(jpeg)/pic9401191.jpg","categories":["Card Game","Deduction","Humor","Party Game"],"thing":456432,"bgg_url":"https://boardgamegeek.com/boardgame/456432","designers":["Michal Peichl"]},{"name":"Pilgrims: Curious Adventures","year":2025,"image":"https://cf.geekdo-images.com/EuwdtaYh-f9KhtzwCEypCg__original/img/_GbZriwoytcL1VNvRXbre9dTc3I=/0x0/filters:format(jpeg)/pic9136603.jpg","categories":["Fantasy","Video Game Theme"],"thing":444683,"bgg_url":"https://boardgamegeek.com/boardgame/444683","designers":["Radim Jurda"]}]},{"publisher":"Magic Bean Games","booth":null,"games":[{"name":"신라: 천년의 미소 (Silla: A Thousand-year-old Smile)","year":2023,"image":"https://cf.geekdo-images.com/mLuKNaHjm_GV3v3p9VCi1A__original/img/hM9JsvBRXWvyT03jiT7Dt9ITu9o=/0x0/filters:format(png)/pic9059765.png","categories":["City Building","Medieval"],"thing":423773,"bgg_url":"https://boardgamegeek.com/boardgame/423773","designers":[]},{"name":"Omok Chess: Hundred Years' War","year":2024,"image":"https://cf.geekdo-images.com/-MNT0gIVWaD1Ms2yw2daBQ__original/img/rTe45Ccczk4HX-E3sOKJzcPEkq8=/0x0/filters:format(png)/pic8374399.png","categories":["Abstract Strategy"],"thing":427008,"bgg_url":"https://boardgamegeek.com/boardgame/427008","designers":[]},{"name":"Codetalk","year":2018,"image":"https://cf.geekdo-images.com/RbL4nl5VCJmTRwQe2F3XhA__original/img/24q0AIcEFNb4EkiDaSjgZzFlvA0=/0x0/filters:format(png)/pic7652323.png","categories":["Educational","Number"],"thing":267941,"bgg_url":"https://boardgamegeek.com/boardgame/267941","designers":[]},{"name":"Segongsa","year":2023,"image":"https://cf.geekdo-images.com/h1zh186EGV7NUW95t2r5yw__original/img/1E-9qkPvx-Ee6J7riFk7SlynOic=/0x0/filters:format(png)/pic7648628.png","categories":[],"thing":395528,"bgg_url":"https://boardgamegeek.com/boardgame/395528","designers":[]},{"name":"Shake Shake","year":2009,"image":"https://cf.geekdo-images.com/TSvJ6bNUZcr9MnEpSWEezQ__original/img/aYPIFdg_ZNLCVEffFUYaGBcMuv8=/0x0/filters:format(png)/pic7648662.png","categories":["Action / Dexterity","Educational","Party Game","Puzzle"],"thing":86086,"bgg_url":"https://boardgamegeek.com/boardgame/86086","designers":[]},{"name":"Egg Add","year":2015,"image":"https://cf.geekdo-images.com/985DWTfIRKCAJ4IPLEiTTA__original/img/ibJDtC8JQvRrBfJLyDXgWQnZX7c=/0x0/filters:format(png)/pic7652316.png","categories":["Animals","Card Game","Economic","Educational","Math","Memory"],"thing":323214,"bgg_url":"https://boardgamegeek.com/boardgame/323214","designers":[]},{"name":"한글날 (Hangulnal)","year":2022,"image":"https://cf.geekdo-images.com/kvkpqUK3I6nf3JQrWWM7yg__original/img/N0Gr_uiE7KWRd2b1ujhPi2C-00I=/0x0/filters:format(png)/pic7648617.png","categories":["Educational","Word Game"],"thing":374856,"bgg_url":"https://boardgamegeek.com/boardgame/374856","designers":[]}]},{"publisher":"Albi","booth":"4-D400 / 6-E110","games":[{"name":"Night at the Zoo","year":2026,"image":"https://cf.geekdo-images.com/B4-xthnd3M8wX_l58iUGBg__original/img/_zt-rzooKPNOC0Jo09W0C7RG8EM=/0x0/filters:format(jpeg)/pic9492648.jpg","categories":["Animals"],"thing":457412,"bgg_url":"https://boardgamegeek.com/boardgame/457412","designers":["Tomáš Holek"]},{"name":"Night at the Zoo: Latecomers","year":2026,"image":"https://cf.geekdo-images.com/B8c8anR6xbSnc3hYoJKaFg__original/img/F09e9Iy7RyKue-hgPnWU5uLwCIc=/0x0/filters:format(jpeg)/pic9432759.jpg","categories":["Expansion for Base-game","Animals","Puzzle"],"thing":465741,"bgg_url":"https://boardgamegeek.com/boardgame/465741","designers":["Tomáš Holek"]},{"name":"Night at the Zoo: Unicorn","year":2026,"image":"https://cf.geekdo-images.com/Fpixj3LhYSXXg1uZiiJeRA__original/img/AN_GmMzfGW4pd32Ko8S9DCCs_Lc=/0x0/filters:format(png)/pic9592322.png","categories":["Expansion for Base-game","Animals","Fantasy"],"thing":470816,"bgg_url":"https://boardgamegeek.com/boardgame/470816","designers":["Tomáš Holek"]},{"name":"Prague Unseen","year":2026,"image":"https://cf.geekdo-images.com/LgY5YfUfSTtcdRYjGcZYEg__original/img/dgnUzjFSXwY2EcJJRxTeqKBSr38=/0x0/filters:format(jpeg)/pic9443257.jpg","categories":["City Building","Fantasy","Mythology"],"thing":457410,"bgg_url":"https://boardgamegeek.com/boardgame/457410","designers":["Jindřich Pavlásek","Michal Peichl","Petr Vojtěch"]},{"name":"Potemkin Villages","year":2025,"image":"https://cf.geekdo-images.com/iKfPkUE62sAUVPDMYFvCYA__original/img/DXABb7CjoeTTWPI_3-P_5Jd3F2U=/0x0/filters:format(jpeg)/pic9701967.jpg","categories":["Card Game"],"thing":454829,"bgg_url":"https://boardgamegeek.com/boardgame/454829","designers":["Petr Čáslava"]},{"name":"Karak","year":2017,"image":"https://cf.geekdo-images.com/tykvv8kCdhOY9Nwl9EzHfw__original/img/dHjqP3eueuEUfnpfJuDaoM6bYK8=/0x0/filters:format(jpeg)/pic6631014.jpg","categories":["Adventure","Children's Game","Exploration","Fantasy","Fighting"],"thing":241477,"bgg_url":"https://boardgamegeek.com/boardgame/241477","designers":["Petr Mikša"]},{"name":"Karak: Regent","year":2019,"image":"https://cf.geekdo-images.com/J9VXJUhraOpRaxGQssDTpA__original/img/tRyIT8MfMT_q4B0Emz9cyV9sAgc=/0x0/filters:format(jpeg)/pic6946602.jpg","categories":["Expansion for Base-game","Adventure","Children's Game","Exploration","Fantasy"],"thing":291436,"bgg_url":"https://boardgamegeek.com/boardgame/291436","designers":["Petr Mikša"]},{"name":"Karak: Sidhar, Kirima, Elspeth","year":2021,"image":"https://cf.geekdo-images.com/fsq9zIj5z0WHTyc0W_r5hg__original/img/Hw8PEkqsVbDGF_h3XFb9VTR9GiE=/0x0/filters:format(jpeg)/pic6975432.jpg","categories":["Expansion for Base-game","Adventure","Children's Game","Exploration","Fantasy"],"thing":347190,"bgg_url":"https://boardgamegeek.com/boardgame/347190","designers":["Roman Hladík","Petr Mikša"]},{"name":"Karak II","year":2023,"image":"https://cf.geekdo-images.com/qi5AAkydfHaO997hUoqgSQ__original/img/kyY3gRUK9ckF_zX3XNeF972e0hw=/0x0/filters:format(jpeg)/pic8270138.jpg","categories":["Adventure","Children's Game","Dice","Exploration","Fantasy","Fighting"],"thing":393530,"bgg_url":"https://boardgamegeek.com/boardgame/393530","designers":["Petr Mikša"]},{"name":"Karak II: Imperium","year":2024,"image":"https://cf.geekdo-images.com/s8Ch2kMOytXS72IswJFndQ__original/img/dTiOohEzxkNgDtVLoV-OQ_k-yo4=/0x0/filters:format(jpeg)/pic8238884.jpg","categories":["Expansion for Base-game","Adventure","Children's Game","Dice","Exploration","Fantasy"],"thing":422043,"bgg_url":"https://boardgamegeek.com/boardgame/422043","designers":["Petr Mikša"]},{"name":"Karak II: Inferno","year":2026,"image":"https://cf.geekdo-images.com/Ttbhq_HtQmqVagmZIf_grQ__original/img/QpoQLsreKU2K_rySBIvmgIVcrkM=/0x0/filters:format(jpeg)/pic9705051.jpg","categories":["Expansion for Base-game","Adventure","Children's Game","Dice","Exploration","Fantasy","Fighting"],"thing":470886,"bgg_url":"https://boardgamegeek.com/boardgame/470886","designers":["Petr Mikša"]},{"name":"Karak II: Chaos","year":2025,"image":"https://cf.geekdo-images.com/UDeMYaxQBb32VvgElP4f4w__original/img/lSfs0dmc5lsXDlvYeEvXVfcXk_E=/0x0/filters:format(jpeg)/pic8992029.jpg","categories":["Expansion for Base-game","Adventure","Children's Game","Dice","Exploration","Fantasy"],"thing":444882,"bgg_url":"https://boardgamegeek.com/boardgame/444882","designers":["Roman Hladík","Petr Mikša"]},{"name":"Karak: Labyrinth","year":2026,"image":"https://cf.geekdo-images.com/vvnmQF8b05QbS053JS-fYA__original/img/p3XOJm2lmhWOJ5Ur9OvZ-_6d5hM=/0x0/filters:format(jpeg)/pic9465040.jpg","categories":["Adventure","Fantasy","Maze","Real-time"],"thing":444883,"bgg_url":"https://boardgamegeek.com/boardgame/444883","designers":["Petr Vojtěch"]},{"name":"Abaku","year":2008,"image":"https://cf.geekdo-images.com/AavMG0DaoVkSNMwBga-2gA__original/img/l-DEDc1Y2lGB3Av5FCmk-IiEFEw=/0x0/filters:format(jpeg)/pic9592356.jpg","categories":["Educational","Math","Number"],"thing":173390,"bgg_url":"https://boardgamegeek.com/boardgame/173390","designers":["Vladimír Tesař"]},{"name":"Garden Lake","year":2025,"image":"https://cf.geekdo-images.com/mcxkBXizzriQatk82QGIWw__original/img/XcSHdU1h4nOi_YiBBEu5TdkHdPs=/0x0/filters:format(jpeg)/pic8848979.jpg","categories":["Abstract Strategy","Puzzle"],"thing":432711,"bgg_url":"https://boardgamegeek.com/boardgame/432711","designers":["Uwe Rosenberg"]},{"name":"Dirt & Dust: Harbordrift","year":2026,"image":"https://cf.geekdo-images.com/ICUDUllWZ3Wx7N7ggbZOfw__original/img/mXpSC_P_YpryfSbvPJekFd4YStA=/0x0/filters:format(jpeg)/pic9260839.jpg","categories":["Expansion for Base-game","Card Game","Dice","Racing","Sports"],"thing":457414,"bgg_url":"https://boardgamegeek.com/boardgame/457414","designers":["Petr Čáslava"]}]},{"publisher":"Asterisk Games","booth":null,"games":[{"name":"Railways of the Lost Atlas","year":2024,"image":"https://cf.geekdo-images.com/9BSUVLs2uXWdWfvkcxufnQ__original/img/TscxYwPlrj6yYly7GCPQs_MUVFo=/0x0/filters:format(jpeg)/pic7194145.jpg","categories":["Economic","Trains"],"thing":365357,"bgg_url":"https://boardgamegeek.com/boardgame/365357","designers":["Kevin Delger","Jacob Schacht"]},{"name":"Railways of the Lost Atlas: Landmarks of the Lost Atlas","year":2026,"image":"https://cf.geekdo-images.com/wjrf4VbDFPx3MpnPmbV95w__original/img/bEfx1N8MaTMaNIZ6xJjImyXnZ7o=/0x0/filters:format(jpeg)/pic9715156.jpg","categories":["Expansion for Base-game","Economic","Trains"],"thing":438903,"bgg_url":"https://boardgamegeek.com/boardgame/438903","designers":["Kevin Delger","Jacob Schacht"]}]},{"publisher":"The Game Builders","booth":"4 J 500","games":[{"name":"Northgreen","year":2026,"image":"https://cf.geekdo-images.com/QULMiZU5rZst56MaBaKpSw__original/img/ISgND4Vw-PcNdXZ9BxyEDpF9UsA=/0x0/filters:format(jpeg)/pic9600547.jpg","categories":["Animals","Environmental","Farming"],"thing":471165,"bgg_url":"https://boardgamegeek.com/boardgame/471165","designers":["Thorsten Hanson","Andreas Odendahl"]}]},{"publisher":"AllPines Society","booth":"4F510 (Golden Meeple)","games":[{"name":"Matchmakers","year":2026,"image":"https://cf.geekdo-images.com/-eJoqwTPDuKO8X50hhVmtA__original/img/UGdhMRpX9u-fvy6_-_HLzs9jz8Y=/0x0/filters:format(jpeg)/pic9705497.jpg","categories":["Adventure","Animals","Card Game","Fantasy"],"thing":474696,"bgg_url":"https://boardgamegeek.com/boardgame/474696","designers":["Baudet Sylvain"]}]},{"publisher":"Deep Print Games","booth":null,"games":[{"name":"Cubaneo","year":2026,"image":"https://cf.geekdo-images.com/kF-HhTuScVgRK6cNgkkb7Q__original/img/xMQZZ80N4e_B2Q_azN7ql2uImjI=/0x0/filters:format(jpeg)/pic9626933.jpg","categories":["Economic"],"thing":472208,"bgg_url":"https://boardgamegeek.com/boardgame/472208","designers":["Michael Rieneck","Stefan Stadler"]},{"name":"Familiar Feat","year":2026,"image":"https://cf.geekdo-images.com/6aoYCUd0K3sJ2mHASb-Lvg__original/img/8dT8uxonmcg2OEs9YObkRhuWbd8=/0x0/filters:format(jpeg)/pic9707230.jpg","categories":["Adventure","Card Game","Fantasy","Fighting"],"thing":475342,"bgg_url":"https://boardgamegeek.com/boardgame/475342","designers":["Friedemann Friese"]},{"name":"Rooms & Roomies","year":2026,"image":"https://cf.geekdo-images.com/0sso8pgApHyZz-fqO2U_FQ__original/img/X61WZA5SFJDpUc3zGPzBLNlLqY8=/0x0/filters:format(jpeg)/pic9680100.jpg","categories":["Puzzle"],"thing":473557,"bgg_url":"https://boardgamegeek.com/boardgame/473557","designers":["Juri Alexander"]},{"name":"Deckers: Duplicity","year":2026,"image":"https://cf.geekdo-images.com/d43WU0kh9xespd9X6TZ0CA__original/img/N2pazFNIm44xuYrkOmCn9O0iaKs=/0x0/filters:format(jpeg)/pic9702901.jpg","categories":["Expansion for Base-game","Science Fiction"],"thing":469375,"bgg_url":"https://boardgamegeek.com/boardgame/469375","designers":["Richard Wilkins"]}]},{"publisher":"www.spielmaterial.de","booth":null,"games":[]},{"publisher":"Elznir Games","booth":"2B110","games":[{"name":"Circadia","year":2026,"image":"https://cf.geekdo-images.com/H89jz0vlQLyU9XELcvEhjw__original/img/VyLKW7tbl7YcO6m2Y92Plfxq0D4=/0x0/filters:format(jpeg)/pic9200907.jpg","categories":["Animals","Card Game","Fantasy","Mythology"],"thing":454399,"bgg_url":"https://boardgamegeek.com/boardgame/454399","designers":["Hisashi Hayashi"]},{"name":"The Lord of the Rings: The Confrontation","year":2005,"image":"https://cf.geekdo-images.com/i5cEvhnKYPzJOXCcKFfMPQ__original/img/Swgaf_llgvkHu4npTa2OUEk95SU=/0x0/filters:format(png)/pic8933169.png","categories":["Adventure","Bluffing","Deduction","Fantasy","Movies / TV / Radio theme","Novel-based"],"thing":18833,"bgg_url":"https://boardgamegeek.com/boardgame/18833","designers":["Reiner Knizia","Eric M. Lang","Christian T. Petersen"]},{"name":"Fate: Defenders of Grimheim","year":2025,"image":"https://cf.geekdo-images.com/eRgc8DvfVmergYxGm2S4jg__original/img/lEXsUuJW1VnaI73z4vBJyvVis9Q=/0x0/filters:format(jpeg)/pic7927138.jpg","categories":["Adventure","Fantasy","Miniatures","Mythology","Wargame"],"thing":399822,"bgg_url":"https://boardgamegeek.com/boardgame/399822","designers":["Jonathan Fryxelius"]},{"name":"Mythologies","year":2026,"image":"https://cf.geekdo-images.com/LmogQFHcVtMonS4OlYn7Zw__original/img/I5_d5oC-v1i2KiW6WSP0Z5nABSc=/0x0/filters:format(jpeg)/pic8916698.jpg","categories":["Ancient","Civilization","Mythology","Religious"],"thing":447570,"bgg_url":"https://boardgamegeek.com/boardgame/447570","designers":["Maxime Babad","Mickaël \"Froh\" Garcin"]},{"name":"Roxane","year":2026,"image":"https://cf.geekdo-images.com/RKpOQf4O2e4s5qdSX5h_qA__original/img/6cgH_cxVxfArYT8trZXC9qTx5VE=/0x0/filters:format(jpeg)/pic8275739.jpg","categories":["Book","Movies / TV / Radio theme"],"thing":275058,"bgg_url":"https://boardgamegeek.com/boardgame/275058","designers":["Daniele Ursini"]},{"name":"Snails: Fire in the Shell","year":2025,"image":"https://cf.geekdo-images.com/5jHxRK_kTtJRLvufj120oA__original/img/vfxMssgJXWV4IcvI7WRh6KTezOE=/0x0/filters:format(jpeg)/pic9086352.jpg","categories":["Expansion for Base-game","Animals","Dice","Exploration","Humor","Video Game Theme"],"thing":446481,"bgg_url":"https://boardgamegeek.com/boardgame/446481","designers":["Damian Stankowski"]}]},{"publisher":"Nerdlab Games","booth":"5B700","games":[{"name":"The Beat: Rockstars of the Galaxy","year":2026,"image":"https://cf.geekdo-images.com/t8cpRWfQfe60gbU2Abz8AA__original/img/VFClCfWKM7xYhuKObyqML0bsqbM=/0x0/filters:format(jpeg)/pic9691533.jpg","categories":["Card Game","Music","Puzzle","Science Fiction","Space Exploration"],"thing":474855,"bgg_url":"https://boardgamegeek.com/boardgame/474855","designers":["Morten Blaabjerg","Christian Kudahl"]},{"name":"Agent Avenue: Four Seasons","year":2026,"image":"https://cf.geekdo-images.com/Fbe3nzv-oTnU7hziwijzTw__original/img/5ZGK15QE99LkspPG3LkTq-Osf_I=/0x0/filters:format(jpeg)/pic9691540.jpg","categories":["Expansion for Base-game","Animals","Bluffing","Card Game","Spies / Secret Agents"],"thing":474854,"bgg_url":"https://boardgamegeek.com/boardgame/474854","designers":["Christian Kudahl","Laura Kudahl"]},{"name":"Mindbug: Add-On Pack 2024-2025","year":2026,"image":"https://cf.geekdo-images.com/-MOENtiAoJfsgeVRSPczDg__original/img/xgY3BDnp6iGhQbpQXP9YhTmd4LA=/0x0/filters:format(jpeg)/pic9742462.jpg","categories":["Expansion for Base-game","Bluffing","Card Game","Fantasy"],"thing":475357,"bgg_url":"https://boardgamegeek.com/boardgame/475357","designers":["Skaff Elias","Richard Garfield","Marvin Hegen","Christian Kudahl"]}]},{"publisher":"Broadway Toys LTD","booth":"2D610","games":[{"name":"Traveluencer","year":2026,"image":"https://cf.geekdo-images.com/9RP_xLO7FXorqaLnSeGpqw__original/img/EV-tjUCShebkeWxCpbU1ImBas58=/0x0/filters:format(png)/pic9525461.png","categories":["Card Game"],"thing":468593,"bgg_url":"https://boardgamegeek.com/boardgame/468593","designers":["Ryo Nakamura (中村 良)","Zhonghao Yang","Kai Zu"]},{"name":"Bubble and Shadow","year":2026,"image":"https://cf.geekdo-images.com/hHEzQjV1DMC7BOQx_mI-iA__original/img/0baYmyowbtHOTzJRU4VgrlgsBrw=/0x0/filters:format(png)/pic9525457.png","categories":["Fantasy","Novel-based"],"thing":468596,"bgg_url":"https://boardgamegeek.com/boardgame/468596","designers":["Kai Zu"]}]},{"publisher":"Amuri Studio","booth":"Japon Brand","games":[{"name":"Nine Tails","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]}]},{"publisher":"Yaofish Games","booth":"5G215","games":[{"name":"A Dream of Splendor in Song Dynasty","year":2023,"image":"https://cf.geekdo-images.com/rGrjaD8F4F8biOdJ6-dpiQ__original/img/DQ898eZzkogq7CtAkwTAaDfAWDM=/0x0/filters:format(jpeg)/pic7827563.jpg","categories":["City Building","Economic","Medieval"],"thing":404286,"bgg_url":"https://boardgamegeek.com/boardgame/404286","designers":["陈强 (CHEN Qiang)"]},{"name":"Sherlock Squad","year":2025,"image":"https://cf.geekdo-images.com/itPEN6mn0gpwm5whKLr2zQ__original/img/NQZwvWFqPzTFkgu9mHYECd2bVuA=/0x0/filters:format(jpeg)/pic9464360.jpg","categories":["Deduction","Puzzle"],"thing":466335,"bgg_url":"https://boardgamegeek.com/boardgame/466335","designers":["陈强 (CHEN Qiang)"]},{"name":"Flying Spit","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Yoyo Tea","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]}]},{"publisher":"Good Game Studio","booth":"5H400","games":[{"name":"1st CEO","year":2026,"image":"https://cf.geekdo-images.com/y7rNBlmUacWZL1O6zENAwg__original/img/7q4LnAHXcLRx936gxxMop3jLBN8=/0x0/filters:format(png)/pic9705288.png","categories":["Card Game","Economic"],"thing":465734,"bgg_url":"https://boardgamegeek.com/boardgame/465734","designers":["Zong-Ger(蔥哥)"]},{"name":"1st Band","year":2026,"image":"https://cf.geekdo-images.com/fq98M4xfEUww_mdVAnARCQ__original/img/dXBPRpOD_tgifwc-cFUthTkJm-s=/0x0/filters:format(png)/pic9521332.png","categories":["Card Game","Music","Number"],"thing":465946,"bgg_url":"https://boardgamegeek.com/boardgame/465946","designers":["Zong-Ger(蔥哥)"]},{"name":"Genius Idea","year":2025,"image":"https://cf.geekdo-images.com/km4tV1v0YTJ1-PkPm473IA__original/img/SWp1jkIawUhQEmuVSL16MTcSFJ4=/0x0/filters:format(png)/pic8846553.png","categories":["Deduction","Party Game","Word Game"],"thing":441097,"bgg_url":"https://boardgamegeek.com/boardgame/441097","designers":["Zong-Ger(蔥哥)"]},{"name":"Furry Poker","year":2025,"image":"https://cf.geekdo-images.com/bdKe9SE3QTgwYsTLx0VYuw__original/img/Cf-yjEq-enjBmzpEivA7KtSkZ6U=/0x0/filters:format(png)/pic8866457.png","categories":["Card Game"],"thing":445041,"bgg_url":"https://boardgamegeek.com/boardgame/445041","designers":["Zong-Ger(蔥哥)"]},{"name":"Dutch Flower Auction","year":2024,"image":"https://cf.geekdo-images.com/CdgVSgw2j-DbiL1JiakDGw__original/img/9VH0oK74a0ECF3niY-pSga42oNM=/0x0/filters:format(png)/pic8599800.png","categories":["Card Game"],"thing":433614,"bgg_url":"https://boardgamegeek.com/boardgame/433614","designers":["Zong-Ger(蔥哥)"]},{"name":"Train & Railway","year":2024,"image":"https://cf.geekdo-images.com/Y7ayfaZdx3qTRqDWfMqy2A__original/img/e6mHr9bcGR8481MBgO1vHk1Ffvw=/0x0/filters:format(png)/pic8316131.png","categories":["Trains"],"thing":424425,"bgg_url":"https://boardgamegeek.com/boardgame/424425","designers":["Zong-Ger(蔥哥)"]},{"name":"Mini Dinosaur","year":2024,"image":"https://cf.geekdo-images.com/9xczbqfg7oUcUoBLLC0qYA__itemrep/img/zmTcUR2YqDEH7aNrHLxC6Cn0G_M=/fit-in/246x300/filters:strip_icc()/pic8366892.png","categories":["Card Game","Racing"],"thing":423802,"bgg_url":"https://boardgamegeek.com/boardgame/423802","designers":["Zong-Ger(蔥哥)"]},{"name":"Christmas Tree","year":2022,"image":"https://cf.geekdo-images.com/uorqQmzox--rMDR4flg95Q__original/img/mLQatWAAc1-gI7IzCHRdhYAC3qY=/0x0/filters:format(png)/pic7641508.png","categories":["Card Game"],"thing":375712,"bgg_url":"https://boardgamegeek.com/boardgame/375712","designers":["Zong-Ger(蔥哥)"]},{"name":"Vegetable Stock","year":2019,"image":"https://cf.geekdo-images.com/EekcSlWY5dqasbMMm12aPg__original/img/tN-wfCkwUJg2wMbfXu5ezIDRiU0=/0x0/filters:format(jpeg)/pic8172467.jpg","categories":["Card Game","Economic","Farming"],"thing":328211,"bgg_url":"https://boardgamegeek.com/boardgame/328211","designers":["Zong-Ger(蔥哥)"]},{"name":"Dungeon Duel","year":2018,"image":"https://cf.geekdo-images.com/nsEm2W6wH7szAKvwHmttZQ__original/img/rlaM_Z2Mw37jgOD6mMddQe7qOQk=/0x0/filters:format(jpeg)/pic4271317.jpg","categories":["Card Game","Fantasy"],"thing":257440,"bgg_url":"https://boardgamegeek.com/boardgame/257440","designers":["Zong-Ger(蔥哥)"]},{"name":"Taiwan Night Market","year":2023,"image":"https://cf.geekdo-images.com/9P0_v4b5-x10171XCnPWNg__original/img/wNPh-AZU8TKHyE8aHAY4LfiZ9Cs=/0x0/filters:format(jpeg)/pic6969781.jpg","categories":["Animals","Economic"],"thing":367201,"bgg_url":"https://boardgamegeek.com/boardgame/367201","designers":["Zong-Ger(蔥哥)"]}]},{"publisher":"PYTHAGORAS","booth":null,"games":[{"name":"Caribe","year":2026,"image":"https://cf.geekdo-images.com/vjM7hmJsQg1fnDLVmtpvig__original/img/8eGJJGmJf1vjbnoYlZcdlWzBs7I=/0x0/filters:format(jpeg)/pic9707338.jpg","categories":["Animals","Environmental","Exploration"],"thing":475390,"bgg_url":"https://boardgamegeek.com/boardgame/475390","designers":["Orlando Sá"]},{"name":"Delfos","year":2026,"image":"https://cf.geekdo-images.com/qJBBx_vN-LEVBqj-tW71-Q__original/img/pTIkuA4-fRmaawWfTTQObB8jFzM=/0x0/filters:format(jpeg)/pic9705842.jpg","categories":["Mythology","Territory Building"],"thing":475388,"bgg_url":"https://boardgamegeek.com/boardgame/475388","designers":["Yaniv Kahana"]}]},{"publisher":"Ashes & Amber","booth":"4D125","games":[{"name":"Ashes & Amber","year":2026,"image":"https://cf.geekdo-images.com/_aeRIXpPVI_oQz72xJL8pw__original/img/EqxzfctfsSFGtJjtgz8K43osuNY=/0x0/filters:format(jpeg)/pic9705619.jpg","categories":["Card Game","City Building","Civilization"],"thing":450286,"bgg_url":"https://boardgamegeek.com/boardgame/450286","designers":["David Falla de Acebo"]}]},{"publisher":"Tie Games","booth":"6D109","games":[{"name":"PuffiNova","year":2026,"image":"https://cf.geekdo-images.com/WA2VLcgoa9mztK7g4u7U9w__original/img/oTQviLfEe-i4sMx-8hlu9DXt7L8=/0x0/filters:format(png)/pic9460844.png","categories":["Animals","Card Game","Fantasy"],"thing":455544,"bgg_url":"https://boardgamegeek.com/boardgame/455544","designers":["Juhana Keskinen","Vilma Vihervaara"]},{"name":"PuffiNova: Cosmic Upgrades","year":2026,"image":"https://cf.geekdo-images.com/JmhI1xRU7la8unRcUgLHaw__original/img/NJrKEIJGX_11fo_qoky_rKZa6vk=/0x0/filters:format(jpeg)/pic9543549.jpg","categories":["Expansion for Base-game","Animals","Card Game","Fantasy"],"thing":469040,"bgg_url":"https://boardgamegeek.com/boardgame/469040","designers":["Juhana Keskinen","Vilma Vihervaara"]}]},{"publisher":"Didact Games","booth":"5G115","games":[{"name":"Mission Zelle","year":2026,"image":"https://cf.geekdo-images.com/67lRO7nrcAUzkFbflWmXhg__original/img/12MiRuIhr-IcQcSubuWI_TMTckQ=/0x0/filters:format(png)/pic9602705.png","categories":["Educational"],"thing":471061,"bgg_url":"https://boardgamegeek.com/boardgame/471061","designers":["Daniel Hitzing","Erik Robert"]},{"name":"BIOlink: Gut vernetzt ist halb gefressen.","year":2026,"image":"https://cf.geekdo-images.com/cLeqfDPMtUQTFo8DJ9938Q__original/img/zkACCoQ9T1Srge68uDvR--o5Y2M=/0x0/filters:format(png)/pic9744372.png","categories":["Card Game"],"thing":474661,"bgg_url":"https://boardgamegeek.com/boardgame/474661","designers":["Daniel Hitzing","Erik Robert"]},{"name":"Smart Split","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"FangFrage","year":2026,"image":"https://cf.geekdo-images.com/fFHv_5P-E5Tm2xE1D7Uo1A__original/img/YWebUH8-lFZNaE8etVn6oEny658=/0x0/filters:format(png)/pic9408216.png","categories":["Economic","Educational","Nautical","Political"],"thing":464843,"bgg_url":"https://boardgamegeek.com/boardgame/464843","designers":["Daniel Hitzing","Erik Robert"]},{"name":"Mission Membrane: Sugar into the Bloodstream","year":2025,"image":"https://cf.geekdo-images.com/Tfs1eIl8IHCPedF7l5-WPw__original/img/cM6rZ7z7EKygFMKWFJ-SjbNor_0=/0x0/filters:format(jpeg)/pic8946369.jpg","categories":["Educational"],"thing":448483,"bgg_url":"https://boardgamegeek.com/boardgame/448483","designers":["Daniel Hitzing","Erik Robert"]}]},{"publisher":"Frosted Games","booth":"3G300","games":[{"name":"Space Lab","year":2025,"image":"https://cf.geekdo-images.com/qdUo0pG_u4oN9wLSkl4uCg__original/img/0bp9TDJu-YyNM3G1X5OS8fpTkxE=/0x0/filters:format(png)/pic9092169.png","categories":["Card Game","Science Fiction"],"thing":449974,"bgg_url":"https://boardgamegeek.com/boardgame/449974","designers":["Johannes Goupy","Corentin Lebrat"]},{"name":"Solstis","year":2024,"image":"https://cf.geekdo-images.com/T6i991w8_ccgP5s2ObEIpw__original/img/pGq6AD9aFYJjqVg0ITbDSN9cq-I=/0x0/filters:format(png)/pic8548331.png","categories":["Abstract Strategy","Adventure","Exploration","Fantasy"],"thing":411255,"bgg_url":"https://boardgamegeek.com/boardgame/411255","designers":["Bruno Cathala","Corentin Lebrat"]},{"name":"Astro Knights","year":2023,"image":"https://cf.geekdo-images.com/jVHj2mDZsjXfEZtT50kSQg__original/img/BZNN6uXkiQiFl0AYUARb2JN7umA=/0x0/filters:format(jpeg)/pic6555779.jpg","categories":["Card Game","Fighting","Science Fiction"],"thing":352179,"bgg_url":"https://boardgamegeek.com/boardgame/352179","designers":["Nick Little (I)","Will Sobel"]},{"name":"Too Many Bones: Age of Tyranny","year":2018,"image":"https://cf.geekdo-images.com/bRasb1NdCfxaIMqZ9YGZsg__original/img/rFVxskOLtT5INxiMT86PiCxzBME=/0x0/filters:format(png)/pic4214742.png","categories":["Expansion for Base-game","Adventure","Dice","Fantasy"],"thing":239291,"bgg_url":"https://boardgamegeek.com/boardgame/239291","designers":["Adam Carlson","Josh J. Carlson"]},{"name":"Dead Cells: The Rogue-Lite Board Game","year":2024,"image":"https://cf.geekdo-images.com/N_5Dz0GeI5dGBzSrBMEqrg__original/img/ppMMkd1w8h-m7OfsRRL3VXQ9lKI=/0x0/filters:format(jpeg)/pic7336034.jpg","categories":["Adventure","Card Game","Exploration","Fantasy","Video Game Theme"],"thing":380135,"bgg_url":"https://boardgamegeek.com/boardgame/380135","designers":["Antoine Bauza","Corentin Lebrat","Ludovic Maublanc","Théo Rivière"]},{"name":"Orloj: The Prague Astronomical Clock","year":2025,"image":"https://cf.geekdo-images.com/PhwbD--vP0xEdMD-WZlZTA__original/img/nqliFXBHqzHE-QR6Zg0CgcB2n-c=/0x0/filters:format(png)/pic8685899.png","categories":["Medieval","Renaissance"],"thing":429405,"bgg_url":"https://boardgamegeek.com/boardgame/429405","designers":["Abraham Sanchez Hermida","Paloma J. Pascual"]},{"name":"Paper Tales : Édition intégrale","year":2022,"image":"https://cf.geekdo-images.com/guqfmjyacZQ5gl9Y4YKDNA__original/img/l7OqeMMFJcqyNtGpnDZ1ixmOdqE=/0x0/filters:format(jpeg)/pic6924786.jpg","categories":["Card Game","Fantasy"],"thing":365128,"bgg_url":"https://boardgamegeek.com/boardgame/365128","designers":["Masato Uesugi"]},{"name":"Entropy","year":2026,"image":"https://cf.geekdo-images.com/N6_JQSyPBMT4U7PYO05ZRg__original/img/RiIgSc49ZDKUe56YCEKIxvAhzBg=/0x0/filters:format(jpeg)/pic9357499.jpg","categories":["Economic","Science Fiction"],"thing":462941,"bgg_url":"https://boardgamegeek.com/boardgame/462941","designers":["Tommaso Battista","Simone Luciani","Nestore Mangone"]},{"name":"Under the Leaves","year":2025,"image":"https://cf.geekdo-images.com/hc-nyRZBGR4OvOEMNckzjw__original/img/K9y4UK5rvX-p_T0-AigCDPfSRRU=/0x0/filters:format(jpeg)/pic8636789.jpg","categories":["Fantasy","Territory Building"],"thing":436751,"bgg_url":"https://boardgamegeek.com/boardgame/436751","designers":["Trevor Benjamin","Brett J. Gilbert"]},{"name":"Too Many Bones","year":2017,"image":"https://cf.geekdo-images.com/wKwRk0wYBcrtLAfgn4PCdg__original/img/Wpp0vzsVe4HxXGUqiZ1hDvwAHZU=/0x0/filters:format(png)/pic6624445.png","categories":["Adventure","Dice","Fantasy","Fighting"],"thing":192135,"bgg_url":"https://boardgamegeek.com/boardgame/192135","designers":["Josh J. Carlson","Adam Carlson"]},{"name":"Star Trek: Captain's Chair","year":2025,"image":"https://cf.geekdo-images.com/Ft_wPFLBXESSipuF1-t8gQ__original/img/XboqICZYNz4Q0_6vKwAG8K8EN5w=/0x0/filters:format(jpeg)/pic8243925.jpg","categories":["Card Game","Movies / TV / Radio theme","Science Fiction","Space Exploration"],"thing":422541,"bgg_url":"https://boardgamegeek.com/boardgame/422541","designers":["Nigel Buckle","Dávid Turczi"]},{"name":"Conservas","year":2024,"image":"https://cf.geekdo-images.com/ShmrX5D3QG7RqG60HoNLIA__original/img/YyReaGm9eE1CClEF5BFXBvyIxl0=/0x0/filters:format(png)/pic7884933.png","categories":["Environmental","Nautical"],"thing":402024,"bgg_url":"https://boardgamegeek.com/boardgame/402024","designers":["Scott Almes"]},{"name":"Andromeda's Edge","year":2024,"image":"https://cf.geekdo-images.com/n3gYugbvd_LHVynDhfoVbw__original/img/wpassO7P8Vb-3tke2X3Ou5Pn0LE=/0x0/filters:format(jpeg)/pic7334483.jpg","categories":["Fighting","Science Fiction","Space Exploration","Territory Building"],"thing":358661,"bgg_url":"https://boardgamegeek.com/boardgame/358661","designers":["Luke Laurie","Maximus Laurie"]}]},{"publisher":"CMON Global Limited","booth":"H6F301","games":[{"name":"Grow Sky","year":2024,"image":"https://cf.geekdo-images.com/b3lMV93rQt7UrTyoAdS7Nw__original/img/p1w0k90vnCx-16gQgz6d8syktUE=/0x0/filters:format(png)/pic9703976.png","categories":["Aviation / Flight","Card Game","Dice","Economic","Fantasy","Puzzle","Racing","Science Fiction","Transportation","Travel"],"thing":428682,"bgg_url":"https://boardgamegeek.com/boardgame/428682","designers":[]},{"name":"ATRAH","year":2026,"image":"https://cf.geekdo-images.com/GK9LAzWrV2x7CpFoHMqw_g__original/img/Er_O1Z6tbKHpOYX2n2Q3PSBvdMs=/0x0/filters:format(png)/pic9703964.png","categories":["Card Game","Nautical"],"thing":472801,"bgg_url":"https://boardgamegeek.com/boardgame/472801","designers":["Jérémy Ducret","Johannes Goupy"]},{"name":"KumoKumo Park","year":2026,"image":"https://cf.geekdo-images.com/MwFH3IJkhI7eAYLRjdwfRw__original/img/gSN1nPuvfKOLsyowiPoPSgN_xow=/0x0/filters:format(png)/pic9703959.png","categories":["Dice"],"thing":474694,"bgg_url":"https://boardgamegeek.com/boardgame/474694","designers":["Reiner Knizia"]},{"name":"Collect!: Sharp & Shimmer","year":2026,"image":"https://cf.geekdo-images.com/3ZINiXsrVzLTa2fQy-RV9w__original/img/P9wN25P6dywEeaAytV1RPpN5jXY=/0x0/filters:format(png)/pic9726544.png","categories":["Expansion for Base-game","Animals","Card Game","Children's Game"],"thing":475360,"bgg_url":"https://boardgamegeek.com/boardgame/475360","designers":["Jérémy Ducret","Johannes Goupy"]}]},{"publisher":"Pektis Studio","booth":null,"games":[{"name":"Fintastic Sea","year":2025,"image":"https://cf.geekdo-images.com/rpNNm6KqyLhM5VbJt4nxVQ__original/img/zLP0X6gsS7ufY2mtf7rvdhx5RVo=/0x0/filters:format(jpeg)/pic8802302.jpg","categories":["Animals","Environmental"],"thing":442978,"bgg_url":"https://boardgamegeek.com/boardgame/442978","designers":["Mahmoud Abdelwahab","Xue Cui"]},{"name":"Wanderlust: Discover the World","year":2024,"image":"https://cf.geekdo-images.com/Q9XcxLvRe05RMK2PMAfJGA__original/img/evIxEIkEXgiHIthJFqd8-8eLw-Y=/0x0/filters:format(jpeg)/pic7417427.jpg","categories":["Racing","Transportation"],"thing":369353,"bgg_url":"https://boardgamegeek.com/boardgame/369353","designers":["Julian Asleh"]}]},{"publisher":"Laserox","booth":null,"games":[]},{"publisher":"AllGo-Games","booth":"5D100","games":[{"name":"RED NOTICE","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"LEDA - Bundle mit Erweiterung","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"KAWA - Niwashi Expansion","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Tanbo","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Federleicht!","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Grizzy & die Lemminge","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Haushoch!","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Villa Panda","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]},{"name":"Guacamole","year":null,"image":null,"categories":[],"thing":null,"bgg_url":null,"designers":[]}]},{"publisher":"Adam's Apple Games, LLC","booth":"4H120","games":[{"name":"Gnomeville","year":2026,"image":"https://cf.geekdo-images.com/DB4wZM08hBMDdayUpbS6ag__original/img/FU8y_c1f0lR5GdIiMujqRDD3rX8=/0x0/filters:format(jpeg)/pic9150208.jpg","categories":["City Building","Fantasy"],"thing":455727,"bgg_url":"https://boardgamegeek.com/boardgame/455727","designers":["Björn Lindberg"]},{"name":"The Jailbreak","year":2026,"image":"https://cf.geekdo-images.com/9EIAiBqquWTa2FivmyD75Q__itemrep/img/UeMcyq3XWvW7hFqEwRiBMhOHSOU=/fit-in/246x300/filters:strip_icc()/pic9722470.png","categories":["Deduction","Puzzle"],"thing":475769,"bgg_url":"https://boardgamegeek.com/boardgame/475769","designers":["Joel Kennedy","Karl Lange"]},{"name":"The Bird","year":2026,"image":"https://cf.geekdo-images.com/hoaLlC3KpxxucQMENHq3fw__original/img/frjtE0XI_Olfyu5dy0GvyrpqYVw=/0x0/filters:format(png)/pic9708051.png","categories":["Action / Dexterity","Party Game"],"thing":475467,"bgg_url":"https://boardgamegeek.com/boardgame/475467","designers":["Adam Rehberg"]}]}];
 
@@ -393,6 +498,108 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
+// ---- 個人清單（僅存於本機瀏覽器 localStorage，不同瀏覽器/裝置之間不會同步）----
+const USER_STORE_KEY = 'essen2026_userlists_v1';
+
+function loadUserStore() {
+  try {
+    const raw = localStorage.getItem(USER_STORE_KEY);
+    if (!raw) return { currentUser: '', users: {} };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return { currentUser: '', users: {} };
+    if (!parsed.users || typeof parsed.users !== 'object') parsed.users = {};
+    if (typeof parsed.currentUser !== 'string') parsed.currentUser = '';
+    return parsed;
+  } catch (e) {
+    return { currentUser: '', users: {} };
+  }
+}
+
+function saveUserStore() {
+  try {
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(userStore));
+  } catch (e) {
+    // localStorage 不可用（例如無痕模式已滿）時靜默失敗，不影響其他功能
+  }
+}
+
+let userStore = loadUserStore();
+let showOnlyMyList = false;
+
+function gameKey(r) {
+  return r.bgg_url || `${r.publisher}::${r.name}`;
+}
+
+function currentUserList() {
+  const u = userStore.currentUser;
+  if (!u || !userStore.users[u]) return [];
+  return userStore.users[u];
+}
+
+function isInMyList(key) {
+  return currentUserList().includes(key);
+}
+
+function toggleInMyList(key) {
+  const u = userStore.currentUser;
+  if (!u) return;
+  if (!userStore.users[u]) userStore.users[u] = [];
+  const list = userStore.users[u];
+  const idx = list.indexOf(key);
+  if (idx >= 0) list.splice(idx, 1);
+  else list.push(key);
+  saveUserStore();
+}
+
+function renderUserBar() {
+  const userSelect = document.getElementById('userSelect');
+  const names = Object.keys(userStore.users).sort((a,b)=>a.localeCompare(b));
+  const prevScroll = userSelect.scrollTop;
+  userSelect.innerHTML = '<option value="">— 選擇使用者 —</option>' +
+    names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  userSelect.value = userStore.currentUser || '';
+  userSelect.scrollTop = prevScroll;
+
+  const hasUser = !!userStore.currentUser;
+  const count = currentUserList().length;
+  document.getElementById('userCount').textContent = hasUser
+    ? `${escapeHtml(userStore.currentUser)} 的清單：${count} 款`
+    : '尚未選擇使用者';
+
+  const myListBtn = document.getElementById('toggleMyListBtn');
+  myListBtn.disabled = !hasUser;
+  if (!hasUser) { showOnlyMyList = false; }
+  myListBtn.classList.toggle('active', showOnlyMyList);
+  document.getElementById('exportExcelBtn').disabled = !hasUser || count === 0;
+}
+
+function exportMyListToExcel() {
+  const u = userStore.currentUser;
+  if (!u) return;
+  const keys = new Set(currentUserList());
+  if (keys.size === 0) return;
+  const rows = ROWS.filter(r => keys.has(gameKey(r)));
+  const data = rows.map(r => ({
+    '出版商': r.publisher,
+    '遊戲名稱': r.name,
+    '年份': r.year || '',
+    '展館': r.halls.length ? r.halls.map(h => 'Hall ' + h).join('、') : '',
+    '攤位': r.booth || '',
+    '作者': r.designers.join('、'),
+    '類型': r.categories.join('、'),
+    'BGG連結': r.bgg_url || ''
+  }));
+  if (typeof XLSX === 'undefined') {
+    alert('Excel 匯出元件載入失敗，請檢查網路連線後重新整理頁面再試一次。');
+    return;
+  }
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:16},{wch:28},{wch:6},{wch:10},{wch:12},{wch:20},{wch:24},{wch:38}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '我的清單');
+  XLSX.writeFile(wb, `essen2026_${u}_清單.xlsx`);
+}
+
 function cardHtml(r) {
   const img = r.image
     ? `<div class="card-img"><img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.name)}" loading="lazy"></div>`
@@ -405,8 +612,14 @@ function cardHtml(r) {
   const cats = r.categories.slice(0, 4).map(c => `<span class="cat-tag">${escapeHtml(c)}</span>`).join('');
   const boothHtml = r.booth ? escapeHtml(r.booth) : '攤位未公告';
   const designerHtml = r.designers.length ? `<div class="card-designer">作者：${escapeHtml(r.designers.join('、'))}</div>` : '';
+  const key = gameKey(r);
+  const inList = isInMyList(key);
+  const listBtn = userStore.currentUser
+    ? `<button type="button" class="card-list-btn ${inList ? 'active' : ''}" data-key="${escapeHtml(key)}" title="加入/移除我的清單" aria-label="加入我的清單">${inList ? '★' : '☆'}</button>`
+    : '';
   return `
     <div class="card" data-publisher="${escapeHtml(r.publisher)}" data-name="${escapeHtml((r.name||'').toLowerCase())}" data-booth="${escapeHtml((r.booth||'').toLowerCase())}" data-categories="${escapeHtml(r.categories.join('|'))}" data-year="${r.year||0}">
+      ${listBtn}
       ${img}
       <div class="card-body">
         ${titleHtml}
@@ -430,6 +643,7 @@ function applyFiltersAndSort(rows) {
     if (cat && !r.categories.includes(cat)) return false;
     if (hall && !r.halls.includes(hall)) return false;
     if (designer && !r.designers.includes(designer)) return false;
+    if (showOnlyMyList && !isInMyList(gameKey(r))) return false;
     if (q) {
       const hay = `${r.publisher} ${r.name} ${r.booth||''} ${r.designers.join(' ')}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -503,6 +717,44 @@ document.getElementById('viewFlat').addEventListener('click', () => {
   render();
 });
 
+document.getElementById('newUserBtn').addEventListener('click', () => {
+  const input = document.getElementById('newUserInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (!userStore.users[name]) userStore.users[name] = [];
+  userStore.currentUser = name;
+  saveUserStore();
+  input.value = '';
+  renderUserBar();
+  render();
+});
+document.getElementById('newUserInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('newUserBtn').click();
+  }
+});
+document.getElementById('userSelect').addEventListener('change', (e) => {
+  userStore.currentUser = e.target.value;
+  saveUserStore();
+  renderUserBar();
+  render();
+});
+document.getElementById('toggleMyListBtn').addEventListener('click', () => {
+  showOnlyMyList = !showOnlyMyList;
+  renderUserBar();
+  render();
+});
+document.getElementById('exportExcelBtn').addEventListener('click', exportMyListToExcel);
+document.getElementById('main').addEventListener('click', (e) => {
+  const btn = e.target.closest('.card-list-btn');
+  if (!btn) return;
+  toggleInMyList(btn.dataset.key);
+  renderUserBar();
+  render();
+});
+
+renderUserBar();
 render();
 </script>
 
