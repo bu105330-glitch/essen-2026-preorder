@@ -21,9 +21,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install requests
-
       - name: Rebuild site data from BoardGameGeek
         run: python scripts/build_site.py
 
