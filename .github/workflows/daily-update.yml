@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "scripts/build_site.py"
+      - "site_template.html"
       - ".github/workflows/daily-update.yml"
 
 permissions:
