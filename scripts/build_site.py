@@ -75,6 +75,16 @@ def link_names(detail, link_type):
     return [link.get("name") for link in links if link.get("name")]
 
 
+def game_weight(detail):
+    dynamic = nested_item(detail.get("dynamicinfo"))
+    polls = dynamic.get("polls") or {}
+    weight_poll = polls.get("boardgameweight") or {}
+    value = number(weight_poll.get("averageweight"))
+    if value is None:
+        value = number((dynamic.get("stats") or {}).get("avgweight"))
+    return round(value, 2) if value is not None and value > 0 else None
+
+
 def extract_booth(text):
     patterns = (
         r"(?:stand|booth|hall(?:e)?)\D{0,35}([1-8]\s*[-/]?\s*[A-Z]\s*\d{2,4})",
@@ -198,6 +208,10 @@ def preview_game(item, preview_parent):
         "thing": thing_id,
         "bgg_url": canonical or (f"https://boardgamegeek.com/boardgame/{thing_id}" if thing_id else None),
         "designers": link_names(detail, "boardgamedesigner"),
+        "min_players": integer(detail.get("minplayers")),
+        "max_players": integer(detail.get("maxplayers")),
+        "min_age": integer(detail.get("minage")),
+        "bgg_weight": game_weight(detail),
         "publisher": publisher,
         "booth": item.get("location") or (preview_parent or {}).get("booth") or None,
         "in_preview": True,
@@ -301,6 +315,10 @@ def preorder_only_game(reference, detail):
         "thing": thing_id,
         "bgg_url": detail.get("canonical_link") or f"https://boardgamegeek.com/boardgame/{thing_id}",
         "designers": link_names(detail, "boardgamedesigner"),
+        "min_players": integer(detail.get("minplayers")),
+        "max_players": integer(detail.get("maxplayers")),
+        "min_age": integer(detail.get("minage")),
+        "bgg_weight": game_weight(detail),
         "publisher": reference["publisher"],
         "booth": reference["booth"],
         "in_preview": False,
