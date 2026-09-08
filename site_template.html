@@ -190,7 +190,7 @@ const TERM_ZH={
 const zhTerm=value=>TERM_ZH[value]||value;
 function analysisText(r){
   const signals=[...(r.mechanisms||[]),...(r.categories||[])].filter(Boolean).slice(0,3).map(zhTerm);
-  const focus=signals.length?`核心看點可能集中在${signals.join('、')}`:'目前機制資料仍少';
+  const focus=signals.length?`已知類型或機制包括${signals.join('、')}`:'目前機制資料仍少';
   const w=Number(r.bgg_weight);
   const fit=r.bgg_weight==null?'新作評分尚未穩定，建議先讀規則再排試玩順位':w<2?'重度偏入門，適合在展場快速試玩':w<3?'中等重度，適合先確認完整回合流程':w<4?'策略負荷偏高，建議預留較完整的教學時間':'高重度作品，展前先讀規則會明顯提升試玩效率';
   return `${focus}；${fit}。`;
